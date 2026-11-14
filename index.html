@@ -58,6 +58,9 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
 .contoh-box .card{border-color:var(--gold)}
 .warn-box{background:var(--surface2);border:1px solid var(--warn);border-radius:12px;padding:14px;margin-top:14px}
 .warn-box p{color:var(--ink-soft)}
+.catatan-kode{background:var(--surface2);border:1px solid var(--gold);border-radius:12px;padding:12px 14px;margin-top:10px}
+.catatan-kode p{color:var(--ink-soft)}
+.catatan-kode strong{color:var(--gold)}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
 .topbar .siapa{color:var(--ink-soft);font-size:.9rem}
 .popup-overlay{position:fixed;inset:0;z-index:260;background:rgba(0,0,0,.74);display:none;align-items:center;justify-content:center;padding:20px 14px}
@@ -252,7 +255,11 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
           <label for="kmEmail">Email</label>
           <input type="email" id="kmEmail" autocomplete="email" placeholder="contoh: marketing@contoh.id">
           <label for="kmKode">Kode marketing</label>
-          <select id="kmKode"><option value="">Memuat kode…</option></select>
+          <div class="row">
+            <select id="kmKode"><option value="">Memuat kode…</option></select>
+            <button id="btnBuatKodeBaru" type="button" class="ghost kecil" style="flex:0 0 auto">Buat kode baru</button>
+          </div>
+          <div id="kmKodeBaruCatatan"></div>
           <label for="kmNama">Nama (boleh dikosongkan)</label>
           <input type="text" id="kmNama" placeholder="contoh: Budi Santoso">
           <div class="row" style="margin-top:12px">
@@ -1409,15 +1416,21 @@ async function muatKelolaMarketing(){
   box.innerHTML = html + '</tbody></table>';
   return {ok:true, data:rows};
 }
+/* Benar bila tabel marketing_kode belum ada di cloud (pengaturan belum
+   dijalankan) — diketahui dari isiPilihanKodeMarketing atau dari
+   percobaan buat kode baru. Dipakai tombol "Buat kode baru" supaya
+   menampilkan keadaan "belum aktif" yang sama dengan bagian Marketing. */
+var kodeMarketingBelumAktif = false;
 async function isiPilihanKodeMarketing(){
   var sel = el("kmKode");
   if(!sel) return {ok:false};
   var c = getClient();
-  if(!c){ sel.innerHTML = '<option value="">Pengaturan cloud belum dijalankan</option>'; return {ok:false, setup:true}; }
+  if(!c){ kodeMarketingBelumAktif = true; sel.innerHTML = '<option value="">Pengaturan cloud belum dijalankan</option>'; return {ok:false, setup:true}; }
   var r;
   try{ r = await c.from("marketing_kode").select("kode,nama,aktif").eq("aktif", true).order("kode", {ascending:true}); }
-  catch(e){ sel.innerHTML = '<option value="">Kode belum bisa dimuat</option>'; return {ok:false, error:e}; }
-  if(r.error){ sel.innerHTML = '<option value="">Kode belum bisa dimuat</option>'; return {ok:false, error:r.error}; }
+  catch(e){ if(apakahErrorSetup(e)) kodeMarketingBelumAktif = true; sel.innerHTML = '<option value="">Kode belum bisa dimuat</option>'; return {ok:false, error:e}; }
+  if(r.error){ if(apakahErrorSetup(r.error)) kodeMarketingBelumAktif = true; sel.innerHTML = '<option value="">Kode belum bisa dimuat</option>'; return {ok:false, error:r.error}; }
+  kodeMarketingBelumAktif = false;
   var rows = Array.isArray(r.data) ? r.data : [];
   if(!rows.length){ sel.innerHTML = '<option value="">Belum ada kode aktif — buat dulu di layar Sistem</option>'; return {ok:true, data:rows}; }
   sel.innerHTML = '<option value="">Pilih kode</option>';
@@ -1427,6 +1440,82 @@ async function isiPilihanKodeMarketing(){
     sel.appendChild(op);
   });
   return {ok:true, data:rows};
+}
+/* ===== Buat kode marketing baru (hanya pemilik) ===== */
+/* Generator yang sama dengan layar Admin marketing di aplikasi utama
+   (buatKodeMarketing): 6 karakter dari huruf/angka tanpa yang mudah
+   tertukar (tanpa I, O, 0, 1). Kode di sini HANYA dibuat di tabel
+   marketing_kode — penugasannya ke seorang marketing tetap lewat
+   tombol "Tambah marketing" di bawah. */
+function buatKodeMarketing(){
+  var Huruf="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  var out="";
+  if(window.crypto && crypto.getRandomValues){
+    var a=new Uint8Array(6); crypto.getRandomValues(a);
+    for(var i=0;i<6;i++) out+=Huruf.charAt(a[i]%Huruf.length);
+  } else { for(var i=0;i<6;i++) out+=Huruf.charAt(Math.floor(Math.random()*Huruf.length)); }
+  return out;
+}
+function salinKodeBaru(kode){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(kode).then(function(){
+        tampilPopup("Kode tersalin","Kode " + kode + " sudah tersalin.\nBagikan kode itu ke marketing yang ditugaskan.");
+      }, function(){ tampilPopup("Kode: " + kode,"Salin kode di atas, lalu bagikan ke marketing yang ditugaskan."); });
+      return true;
+    }
+  }catch(e){}
+  tampilPopup("Kode: " + kode,"Salin kode di atas, lalu bagikan ke marketing yang ditugaskan.");
+  return true;
+}
+async function buatKodeBaru(){
+  var c = getClient();
+  if(!c || kodeMarketingBelumAktif){
+    tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Salinan pengaturannya ada di layar Sistem.");
+    tampilkanKotakSetup();
+    return {ok:false, setup:true};
+  }
+  /* Nama baris kode: isi kolom Nama bila ada, kalau tidak bagian depan
+     email (sebelum @); bila keduanya kosong, pakai kodenya sendiri —
+     kolom nama di tabel tidak boleh kosong. */
+  var namaForm = String(el("kmNama").value || "").trim();
+  var emailForm = String(el("kmEmail").value || "").trim().toLowerCase();
+  var nama = namaForm || (emailForm.split("@")[0] || "");
+  /* Cari kode yang belum dipakai (pola yang sama dengan aplikasi utama:
+     buat lalu cek, ulangi bila bertabrakan, paling banyak 8 kali). */
+  var kode = "";
+  for(var i=0;i<8;i++){
+    var g = buatKodeMarketing();
+    var cek;
+    try{ cek = await c.from("marketing_kode").select("kode").eq("kode", g).maybeSingle(); }
+    catch(e){
+      if(apakahErrorSetup(e)){ kodeMarketingBelumAktif = true; tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Salinan pengaturannya ada di layar Sistem."); tampilkanKotakSetup(); return {ok:false, setup:true, error:e}; }
+      tampilPopup("Kode belum bisa dibuat","Kode baru belum bisa dibuat — periksa koneksi internet Anda, lalu coba lagi."); return {ok:false, error:e};
+    }
+    if(cek.error){
+      if(apakahErrorSetup(cek.error)){ kodeMarketingBelumAktif = true; tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Salinan pengaturannya ada di layar Sistem."); tampilkanKotakSetup(); return {ok:false, setup:true, error:cek.error}; }
+      break;
+    }
+    if(!cek.data){ kode = g; break; }
+  }
+  if(!kode){ tampilPopup("Kode belum bisa dibuat","Kode baru belum bisa dibuat — periksa koneksi internet Anda, lalu coba lagi."); return {ok:false}; }
+  if(!nama) nama = kode;
+  var r;
+  try{ r = await c.from("marketing_kode").insert({kode:kode, nama:nama, aktif:true}); }
+  catch(e){ tampilPopup("Belum bisa menyimpan","Kode belum tersimpan — periksa koneksi internet Anda, lalu coba lagi."); return {ok:false, error:e}; }
+  if(r.error){
+    if(apakahErrorSetup(r.error)){ kodeMarketingBelumAktif = true; tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Salinan pengaturannya ada di layar Sistem."); tampilkanKotakSetup(); return {ok:false, setup:true, error:r.error}; }
+    if(/duplicate|23505/i.test((r.error.message||"")+" "+(r.error.code||""))){ tampilPopup("Kode sudah dipakai","Kode " + kode + " sudah dipakai — coba lagi untuk membuat kode lain."); return {ok:false, error:r.error}; }
+    tampilPopup("Belum bisa menyimpan","Kode belum tersimpan — periksa koneksi internet Anda, lalu coba lagi."); return {ok:false, error:r.error};
+  }
+  await isiPilihanKodeMarketing();
+  var sel = el("kmKode");
+  if(sel) sel.value = kode;
+  var catatan = el("kmKodeBaruCatatan");
+  if(catatan){
+    catatan.innerHTML = '<div class="catatan-kode"><p>Kode baru <strong>' + esc(kode) + '</strong> sudah dibuat dan siap ditugaskan. <button type="button" class="ghost kecil" data-salin-kode="' + esc(kode) + '">Salin</button></p><p class="muted" style="margin-top:6px">Kode ini belum ditugaskan ke siapa pun. Isi email di atas, lalu ketuk "Tambah marketing" untuk menugaskannya.</p></div>';
+  }
+  return {ok:true, kode:kode, nama:nama};
 }
 async function tambahMarketing(){
   var email = String(el("kmEmail").value || "").trim().toLowerCase();
@@ -1441,6 +1530,8 @@ async function tambahMarketing(){
   catch(e){ tampilPopup("Belum bisa menambahkan", pesanRamah(e)); return {ok:false, error:e}; }
   if(r.error){ tampilPopup("Belum bisa menambahkan", pesanRamah(r.error)); return {ok:false, error:r.error}; }
   el("kmEmail").value = ""; el("kmNama").value = "";
+  var catatanKode = el("kmKodeBaruCatatan");
+  if(catatanKode) catatanKode.innerHTML = "";
   await muatKelolaMarketing();
   tampilPopup("Marketing ditambahkan","Email " + email + " kini disetujui memakai kode " + kode + ".");
   return {ok:true};
@@ -1707,6 +1798,7 @@ function bindEvents(){
   el("btnKonfirmasiBatal").addEventListener("click", tutupKonfirmasi);
   el("popupKonfirmasiOverlay").addEventListener("click", function(e){ if(e.target === el("popupKonfirmasiOverlay")) tutupKonfirmasi(); });
   el("btnTambahMarketing").addEventListener("click", async function(){ await tambahMarketing(); });
+  el("btnBuatKodeBaru").addEventListener("click", async function(){ await buatKodeBaru(); });
   el("btnTambahPemda").addEventListener("click", async function(){ await tambahPemda(); });
   el("btnTambahInvestor").addEventListener("click", async function(){ await tambahInvestor(); });
   isiPilihanProvinsiKelola();
@@ -1737,6 +1829,8 @@ function bindEvents(){
     if(t && t.getAttribute){
       var k = t.getAttribute("data-kelola-aksi");
       if(k){ kelolaAksiDariTombol(t); return; }
+      var sk = t.getAttribute("data-salin-kode");
+      if(sk){ salinKodeBaru(sk); return; }
       var c = t.getAttribute("data-contoh");
       if(c){ tampilContoh(c); return; }
       var tc = t.getAttribute("data-tutup-contoh");
@@ -1784,6 +1878,7 @@ window.__admin = {
   muatKelola:muatKelola, muatKelolaMarketing:muatKelolaMarketing,
   muatKelolaPemda:muatKelolaPemda, muatKelolaInvestor:muatKelolaInvestor,
   tambahMarketing:tambahMarketing, tambahPemda:tambahPemda, tambahInvestor:tambahInvestor,
+  buatKodeMarketing:buatKodeMarketing, buatKodeBaru:buatKodeBaru, salinKodeBaru:salinKodeBaru,
   toggleMarketing:toggleMarketing, togglePemda:togglePemda, toggleInvestor:toggleInvestor,
   hapusMarketing:hapusMarketing, hapusPemda:hapusPemda, hapusInvestor:hapusInvestor,
   isiKotaKelola:isiKotaKelola, isiPilihanProvinsiKelola:isiPilihanProvinsiKelola,
