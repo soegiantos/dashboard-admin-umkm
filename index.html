@@ -562,7 +562,7 @@ var SQL_TEXT = ["-- ============================================================
   "",
   "  return query",
   "  select",
-  "    au.email,",
+  "    au.email::text,",
   "    coalesce(nullif(p.nama_usaha, ''), nullif(ud.data -> 'inputs' ->> 'inNama', '')) as nama_usaha,",
   "    nullif(ud.data -> 'inputs' ->> 'inKota', '') as kota,",
   "    case",
