@@ -144,7 +144,7 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
 
     <div class="card">
       <h2>Batas yang dijaga aplikasi ini</h2>
-      <p>Admin melihat aktivitas dan identitas (email, nama usaha, kota, level) serta jumlah kegiatan (jumlah transaksi, stok, piutang, utang; jumlah listing; minat menurut status; jumlah masuk Pemda). Admin <strong>tidak</strong> melihat isi keuangan tiap usaha: tidak ada angka transaksi, rincian transaksi, atau lokasi GPS. Aplikasi ini hanya memantau — tidak mengubah data pengguna mana pun.</p>
+      <p>Admin melihat aktivitas dan identitas (email, nama usaha, kota, level) serta jumlah kegiatan (jumlah transaksi, stok, piutang, utang; jumlah listing; minat menurut status; jumlah masuk Pemda). Admin <strong>tidak</strong> melihat isi keuangan tiap usaha: tidak ada angka transaksi, rincian transaksi, atau lokasi GPS. Di layar Kelola pengguna, Bapak menyetujui atau menonaktifkan akses marketing, Pemda, dan investor — hanya baris izin akses yang diubah di sana; data usaha tetap tidak pernah diubah.</p>
     </div>
 
     <nav class="tabbar" id="tabbar">
@@ -153,6 +153,7 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
       <button type="button" data-layar="aktivitas">Aktivitas</button>
       <button type="button" data-layar="pengguna">Pengguna</button>
       <button type="button" data-layar="sistem">Sistem</button>
+      <button type="button" data-layar="kelola">Kelola pengguna</button>
     </nav>
 
     <section class="layar aktif" id="layarRingkasan">
@@ -226,11 +227,74 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
             <button id="btnSalinSql" type="button">Salin SQL</button>
           </div>
         </div>
+        <div id="kotakSetupPersetujuan" class="hidden">
+          <h3>Pengaturan cloud — persetujuan pengguna</h3>
+          <p>Salin seluruh teks di bawah ini, tempel di SQL Editor cloud, lalu klik Run. Setelah itu muat ulang halaman ini.</p>
+          <label for="sqlTextPersetujuan">SQL persetujuan pengguna (akses investor)</label>
+          <textarea id="sqlTextPersetujuan" readonly></textarea>
+          <div class="row" style="margin-top:12px">
+            <button id="btnSalinSqlPersetujuan" type="button">Salin SQL</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layar" id="layarKelola">
+      <div class="card">
+        <h2>Kelola pengguna</h2>
+        <p>Pengguna mendaftar sendiri dengan kata sandinya; di sini Bapak menyetujui atau menonaktifkan aksesnya.</p>
+        <p class="muted" style="margin-top:6px">Marketing, Pemda, dan investor masuk ke aplikasinya masing-masing hanya bila emailnya ada di daftar ini dan masih aktif. Pendaftaran UMKM tetap terbuka tanpa persetujuan.</p>
+        <div id="kelolaIsi">
+          <h3>Marketing</h3>
+          <p class="muted">Satu baris = satu penugasan kode ke satu orang. Satu orang boleh memegang lebih dari satu kode.</p>
+          <div id="kelolaMarketingIsi"><p class="muted">Memuat daftar marketing…</p></div>
+          <h3>Tambah marketing</h3>
+          <label for="kmEmail">Email</label>
+          <input type="email" id="kmEmail" autocomplete="email" placeholder="contoh: marketing@contoh.id">
+          <label for="kmKode">Kode marketing</label>
+          <select id="kmKode"><option value="">Memuat kode…</option></select>
+          <label for="kmNama">Nama (boleh dikosongkan)</label>
+          <input type="text" id="kmNama" placeholder="contoh: Budi Santoso">
+          <div class="row" style="margin-top:12px">
+            <button id="btnTambahMarketing" type="button">Tambah marketing</button>
+          </div>
+
+          <h3>Pemda</h3>
+          <p class="muted">Satu baris = satu alamat email dinas atau pendamping beserta wilayah yang boleh dilihatnya.</p>
+          <div id="kelolaPemdaIsi"><p class="muted">Memuat daftar Pemda…</p></div>
+          <h3>Tambah pengguna Pemda</h3>
+          <label for="kpEmail">Email</label>
+          <input type="email" id="kpEmail" autocomplete="email" placeholder="contoh: dinas@contoh.id">
+          <label for="kpPeran">Peran</label>
+          <select id="kpPeran">
+            <option value="dinas">Dinas</option>
+            <option value="pendamping">Pendamping</option>
+          </select>
+          <label for="kpProvinsi">Provinsi</label>
+          <select id="kpProvinsi"><option value="">Pilih provinsi</option></select>
+          <label for="kpKota">Kota / Kabupaten (boleh dikosongkan = seluruh kota di provinsi itu)</label>
+          <select id="kpKota" disabled><option value="">Pilih provinsi dulu</option></select>
+          <div class="row" style="margin-top:12px">
+            <button id="btnTambahPemda" type="button">Tambah pengguna Pemda</button>
+          </div>
+
+          <h3>Investor</h3>
+          <p class="muted">Satu baris = satu alamat email investor yang disetujui. Tanpa baris aktif di sini, investor tidak bisa masuk portal.</p>
+          <div id="kelolaInvestorIsi"><p class="muted">Memuat daftar investor…</p></div>
+          <h3>Tambah investor</h3>
+          <label for="kiEmail">Email</label>
+          <input type="email" id="kiEmail" autocomplete="email" placeholder="contoh: investor@contoh.id">
+          <label for="kiNama">Nama (boleh dikosongkan)</label>
+          <input type="text" id="kiNama" placeholder="contoh: Budi Santoso">
+          <div class="row" style="margin-top:12px">
+            <button id="btnTambahInvestor" type="button">Tambah investor</button>
+          </div>
+        </div>
       </div>
     </section>
   </section>
 
-  <p class="footnote">Dashboard Admin — Aplikasi Introspeksi UMKM<br>Dr. Ir. Soegianto Soelistiono, M.Si. — Lab Sistem Cerdas Fisika, FST Universitas Airlangga<br>Pemantauan baca saja: aktivitas + identitas + jumlah kegiatan. Isi keuangan tiap usaha tidak pernah ditampilkan.</p>
+  <p class="footnote">Dashboard Admin — Aplikasi Introspeksi UMKM<br>Dr. Ir. Soegianto Soelistiono, M.Si. — Lab Sistem Cerdas Fisika, FST Universitas Airlangga<br>Pemantauan aktivitas + identitas + jumlah kegiatan, ditambah persetujuan akses pengguna. Isi keuangan tiap usaha tidak pernah ditampilkan.</p>
 </div>
 
 <!-- Popup ramah -->
@@ -239,6 +303,18 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
     <h3 id="popupJudul"></h3>
     <p id="popupIsi"></p>
     <div class="aksi"><button id="btnPopupTutup" type="button">Mengerti</button></div>
+  </div>
+</div>
+
+<!-- Popup konfirmasi Ya / Batal -->
+<div class="popup-overlay" id="popupKonfirmasiOverlay" role="dialog" aria-modal="true" aria-labelledby="popupKonfirmasiJudul">
+  <div class="popup-card">
+    <h3 id="popupKonfirmasiJudul"></h3>
+    <p id="popupKonfirmasiIsi"></p>
+    <div class="aksi">
+      <button id="btnKonfirmasiBatal" type="button" class="ghost">Batal</button>
+      <button id="btnKonfirmasiYa" type="button">Ya</button>
+    </div>
   </div>
 </div>
 
@@ -628,6 +704,97 @@ var SQL_TEXT = ["-- ============================================================
   "-- - Sampai file ini dijalankan, aplikasi menampilkan \"Fitur ini belum",
   "--   aktif — pengaturan cloud belum dijalankan\" beserta salinan SQL ini.",
   "-- ============================================================================"].join("\n");;
+/* SQL persetujuan pengguna (salinan sql-persetujuan-admin.sql; ditampilkan
+   di layar Sistem bila tabel akses_investor belum ada di cloud). */
+var SQL_PERSETUJUAN = [
+  "-- ============================================================================",
+  "-- SQL PERSETUJUAN ADMIN — APLIKASI INTROSPEKSI UMKM",
+  "-- ============================================================================",
+  "-- Proyek cloud : aplikasi-introspeksi-umkm",
+  "-- Ref          : bdnqsxwypbrdiwaxydoh",
+  "-- URL          : https://bdnqsxwypbrdiwaxydoh.supabase.co",
+  "--",
+  "-- TUJUAN FILE",
+  "-- Membuat 1 tabel izin baru (akses_investor) untuk persetujuan admin:",
+  "-- investor mendaftar sendiri dengan kata sandinya di Portal Investor, lalu",
+  "-- pemilik aplikasi menyetujui emailnya di layar \"Kelola pengguna\" Dashboard",
+  "-- Admin. Tanpa baris aktif di tabel ini, investor tidak bisa masuk portal.",
+  "--",
+  "-- CARA MENJALANKAN",
+  "-- 1. Buka Dashboard proyek di atas -> SQL Editor -> New query.",
+  "-- 2. Tempel SELURUH isi file ini, lalu klik \"Run\".",
+  "-- 3. File ini idempotent (aman dijalankan ulang).",
+  "--",
+  "-- BATAS",
+  "-- - File ini HANYA membuat tabel akses_investor + kebijakannya. Tabel yang",
+  "--   sudah ada (akses_pemda, akses_marketing, marketing_kode, dan semua",
+  "--   tabel lain) TIDAK diubah, TIDAK dihapus, dan TIDAK ditambah kolomnya.",
+  "-- - Aplikasi admin TIDAK PERNAH membuat akun atau mengatur kata sandi",
+  "--   siapa pun: pengguna mendaftar sendiri; admin hanya menyetujui atau",
+  "--   menonaktifkan baris izin di tabel ini.",
+  "-- - Kebijakan \"akses pemda pemilik semua\" sudah ada di file",
+  "--   sql-investor-pemda.sql dan TIDAK dibuat ulang di sini.",
+  "-- ============================================================================",
+  "",
+  "-- ============================================================================",
+  "-- 1. TABEL akses_investor — siapa saja investor yang boleh masuk portal",
+  "-- ============================================================================",
+  "-- Satu baris = satu alamat email investor. Pemilik aplikasi menambahkan",
+  "-- baris lewat layar \"Kelola pengguna\" di Dashboard Admin, setelah file",
+  "-- ini jalan.",
+  "create table if not exists public.akses_investor (",
+  "  email text primary key,",
+  "  nama text,",
+  "  aktif boolean not null default true,",
+  "  dibuat_pada timestamptz not null default now()",
+  ");",
+  "comment on table public.akses_investor is 'Daftar email investor yang diizinkan masuk Portal Investor. Investor mendaftar sendiri dengan kata sandinya; baris di sini adalah persetujuan pemilik aplikasi.';",
+  "comment on column public.akses_investor.nama is 'Nama investor (diisi pemilik saat menyetujui).';",
+  "",
+  "alter table public.akses_investor enable row level security;",
+  "",
+  "-- Membaca: setiap orang boleh membaca barisnya sendiri.",
+  "drop policy if exists \"akses investor baca sendiri\" on public.akses_investor;",
+  "create policy \"akses investor baca sendiri\" on public.akses_investor",
+  "  for select using (auth.jwt() ->> 'email' = email);",
+  "",
+  "-- Pemilik aplikasi boleh membaca, menambah, mengubah, dan menghapus semua baris.",
+  "drop policy if exists \"akses investor pemilik semua\" on public.akses_investor;",
+  "create policy \"akses investor pemilik semua\" on public.akses_investor",
+  "  for all",
+  "  using (auth.jwt() ->> 'email' = 'soegianto@fst.unair.ac.id')",
+  "  with check (auth.jwt() ->> 'email' = 'soegianto@fst.unair.ac.id');",
+  "",
+  "-- ============================================================================",
+  "-- PENUTUP — DAFTAR VERIFIKASI SETELAH KLIK RUN",
+  "-- ============================================================================",
+  "-- 1. Tabel ada dan masih kosong (pemilik menambahkan investor lewat aplikasi):",
+  "--      select * from public.akses_investor;",
+  "--    Harus 0 baris.",
+  "--",
+  "-- 2. Pemilik bisa menambah baris (masuk sebagai pemilik, lalu jalankan):",
+  "--      insert into public.akses_investor (email, nama, aktif)",
+  "--      values ('contoh-investor@contoh.id', 'Investor Contoh', true);",
+  "--      select * from public.akses_investor;",
+  "--    Harus ada 1 baris; hapus lagi setelah memeriksa:",
+  "--      delete from public.akses_investor where email = 'contoh-investor@contoh.id';",
+  "--",
+  "-- 3. RLS aktif di akses_investor:",
+  "--      select tablename, rowsecurity from pg_tables",
+  "--      where schemaname = 'public' and tablename = 'akses_investor';",
+  "--    Kolom rowsecurity harus true.",
+  "--",
+  "-- CATATAN:",
+  "-- - Sampai file ini dijalankan, Portal Investor menampilkan \"Fitur ini",
+  "--   belum aktif — pengaturan cloud belum dijalankan\" beserta salinan SQL ini.",
+  "-- - Pendaftaran UMKM tetap terbuka tanpa persetujuan; persetujuan hanya",
+  "--   untuk marketing, Pemda, dan investor.",
+  "-- ============================================================================"
+].join("\n");
+/* Daftar wilayah Indonesia (salinan dari Portal Investor — dipakai
+   kaskade provinsi -> kota/kabupaten pada formulir tambah Pemda). */
+        var WILAYAH = {"Aceh": ["Kabupaten Aceh Barat", "Kabupaten Aceh Barat Daya", "Kabupaten Aceh Besar", "Kabupaten Aceh Jaya", "Kabupaten Aceh Selatan", "Kabupaten Aceh Singkil", "Kabupaten Aceh Tamiang", "Kabupaten Aceh Tengah", "Kabupaten Aceh Tenggara", "Kabupaten Aceh Timur", "Kabupaten Aceh Utara", "Kabupaten Bener Meriah", "Kabupaten Bireuen", "Kabupaten Gayo Lues", "Kabupaten Nagan Raya", "Kabupaten Pidie", "Kabupaten Pidie Jaya", "Kabupaten Simeulue", "Kota Banda Aceh", "Kota Langsa", "Kota Lhokseumawe", "Kota Sabang", "Kota Subulussalam"], "Sumatera Utara": ["Kabupaten Asahan", "Kabupaten Batu Bara", "Kabupaten Dairi", "Kabupaten Deli Serdang", "Kabupaten Humbang Hasundutan", "Kabupaten Karo", "Kabupaten Labuhanbatu", "Kabupaten Labuhanbatu Selatan", "Kabupaten Labuhanbatu Utara", "Kabupaten Langkat", "Kabupaten Mandailing Natal", "Kabupaten Nias", "Kabupaten Nias Barat", "Kabupaten Nias Selatan", "Kabupaten Nias Utara", "Kabupaten Padang Lawas", "Kabupaten Padang Lawas Utara", "Kabupaten Pakpak Bharat", "Kabupaten Samosir", "Kabupaten Serdang Bedagai", "Kabupaten Simalungun", "Kabupaten Tapanuli Selatan", "Kabupaten Tapanuli Tengah", "Kabupaten Tapanuli Utara", "Kabupaten Toba", "Kota Binjai", "Kota Gunungsitoli", "Kota Medan", "Kota Padangsidimpuan", "Kota Pematangsiantar", "Kota Sibolga", "Kota Tanjungbalai", "Kota Tebing Tinggi"], "Sumatera Barat": ["Kabupaten Agam", "Kabupaten Dharmasraya", "Kabupaten Kepulauan Mentawai", "Kabupaten Lima Puluh Kota", "Kabupaten Padang Pariaman", "Kabupaten Pasaman", "Kabupaten Pasaman Barat", "Kabupaten Pesisir Selatan", "Kabupaten Sijunjung", "Kabupaten Solok", "Kabupaten Solok Selatan", "Kabupaten Tanah Datar", "Kota Bukittinggi", "Kota Padang", "Kota Padang Panjang", "Kota Pariaman", "Kota Payakumbuh", "Kota Sawahlunto", "Kota Solok"], "Riau": ["Kabupaten Bengkalis", "Kabupaten Indragiri Hilir", "Kabupaten Indragiri Hulu", "Kabupaten Kampar", "Kabupaten Kepulauan Meranti", "Kabupaten Kuantan Singingi", "Kabupaten Pelalawan", "Kabupaten Rokan Hilir", "Kabupaten Rokan Hulu", "Kabupaten Siak", "Kota Dumai", "Kota Pekanbaru"], "Jambi": ["Kabupaten Batanghari", "Kabupaten Bungo", "Kabupaten Kerinci", "Kabupaten Merangin", "Kabupaten Muaro Jambi", "Kabupaten Sarolangun", "Kabupaten Tanjung Jabung Barat", "Kabupaten Tanjung Jabung Timur", "Kabupaten Tebo", "Kota Jambi", "Kota Sungai Penuh"], "Sumatera Selatan": ["Kabupaten Banyuasin", "Kabupaten Empat Lawang", "Kabupaten Lahat", "Kabupaten Muara Enim", "Kabupaten Musi Banyuasin", "Kabupaten Musi Rawas", "Kabupaten Musi Rawas Utara", "Kabupaten Ogan Ilir", "Kabupaten Ogan Komering Ilir", "Kabupaten Ogan Komering Ulu", "Kabupaten Ogan Komering Ulu Selatan", "Kabupaten Ogan Komering Ulu Timur", "Kabupaten Penukal Abab Lematang Ilir", "Kota Lubuk Linggau", "Kota Pagaralam", "Kota Palembang", "Kota Prabumulih"], "Bengkulu": ["Kabupaten Bengkulu Selatan", "Kabupaten Bengkulu Tengah", "Kabupaten Bengkulu Utara", "Kabupaten Kaur", "Kabupaten Kepahiang", "Kabupaten Lebong", "Kabupaten Mukomuko", "Kabupaten Rejang Lebong", "Kabupaten Seluma", "Kota Bengkulu"], "Lampung": ["Kabupaten Lampung Barat", "Kabupaten Lampung Selatan", "Kabupaten Lampung Tengah", "Kabupaten Lampung Timur", "Kabupaten Lampung Utara", "Kabupaten Mesuji", "Kabupaten Pesawaran", "Kabupaten Pesisir Barat", "Kabupaten Pringsewu", "Kabupaten Tanggamus", "Kabupaten Tulang Bawang", "Kabupaten Tulang Bawang Barat", "Kabupaten Way Kanan", "Kota Bandar Lampung", "Kota Metro"], "Kepulauan Bangka Belitung": ["Kabupaten Bangka", "Kabupaten Bangka Barat", "Kabupaten Bangka Selatan", "Kabupaten Bangka Tengah", "Kabupaten Belitung", "Kabupaten Belitung Timur", "Kota Pangkalpinang"], "Kepulauan Riau": ["Kabupaten Bintan", "Kabupaten Karimun", "Kabupaten Kepulauan Anambas", "Kabupaten Lingga", "Kabupaten Natuna", "Kota Batam", "Kota Tanjungpinang"], "DKI Jakarta": ["Kabupaten Administrasi Kepulauan Seribu", "Kota Administrasi Jakarta Barat", "Kota Administrasi Jakarta Pusat", "Kota Administrasi Jakarta Selatan", "Kota Administrasi Jakarta Timur", "Kota Administrasi Jakarta Utara"], "Jawa Barat": ["Kabupaten Bandung", "Kabupaten Bandung Barat", "Kabupaten Bekasi", "Kabupaten Bogor", "Kabupaten Ciamis", "Kabupaten Cianjur", "Kabupaten Cirebon", "Kabupaten Garut", "Kabupaten Indramayu", "Kabupaten Karawang", "Kabupaten Kuningan", "Kabupaten Majalengka", "Kabupaten Pangandaran", "Kabupaten Purwakarta", "Kabupaten Subang", "Kabupaten Sukabumi", "Kabupaten Sumedang", "Kabupaten Tasikmalaya", "Kota Bandung", "Kota Banjar", "Kota Bekasi", "Kota Bogor", "Kota Cimahi", "Kota Cirebon", "Kota Depok", "Kota Sukabumi", "Kota Tasikmalaya"], "Jawa Tengah": ["Kabupaten Banjarnegara", "Kabupaten Banyumas", "Kabupaten Batang", "Kabupaten Blora", "Kabupaten Boyolali", "Kabupaten Brebes", "Kabupaten Cilacap", "Kabupaten Demak", "Kabupaten Grobogan", "Kabupaten Jepara", "Kabupaten Karanganyar", "Kabupaten Kebumen", "Kabupaten Kendal", "Kabupaten Klaten", "Kabupaten Kudus", "Kabupaten Magelang", "Kabupaten Pati", "Kabupaten Pekalongan", "Kabupaten Pemalang", "Kabupaten Purbalingga", "Kabupaten Purworejo", "Kabupaten Rembang", "Kabupaten Semarang", "Kabupaten Sragen", "Kabupaten Sukoharjo", "Kabupaten Tegal", "Kabupaten Temanggung", "Kabupaten Wonogiri", "Kabupaten Wonosobo", "Kota Magelang", "Kota Pekalongan", "Kota Salatiga", "Kota Semarang", "Kota Surakarta", "Kota Tegal"], "DI Yogyakarta": ["Kabupaten Bantul", "Kabupaten Gunungkidul", "Kabupaten Kulon Progo", "Kabupaten Sleman", "Kota Yogyakarta"], "Jawa Timur": ["Kabupaten Bangkalan", "Kabupaten Banyuwangi", "Kabupaten Blitar", "Kabupaten Bojonegoro", "Kabupaten Bondowoso", "Kabupaten Gresik", "Kabupaten Jember", "Kabupaten Jombang", "Kabupaten Kediri", "Kabupaten Lamongan", "Kabupaten Lumajang", "Kabupaten Madiun", "Kabupaten Magetan", "Kabupaten Malang", "Kabupaten Mojokerto", "Kabupaten Nganjuk", "Kabupaten Ngawi", "Kabupaten Pacitan", "Kabupaten Pamekasan", "Kabupaten Pasuruan", "Kabupaten Ponorogo", "Kabupaten Probolinggo", "Kabupaten Sampang", "Kabupaten Sidoarjo", "Kabupaten Situbondo", "Kabupaten Sumenep", "Kabupaten Trenggalek", "Kabupaten Tuban", "Kabupaten Tulungagung", "Kota Batu", "Kota Blitar", "Kota Kediri", "Kota Madiun", "Kota Malang", "Kota Mojokerto", "Kota Pasuruan", "Kota Probolinggo", "Kota Surabaya"], "Banten": ["Kabupaten Lebak", "Kabupaten Pandeglang", "Kabupaten Serang", "Kabupaten Tangerang", "Kota Cilegon", "Kota Serang", "Kota Tangerang", "Kota Tangerang Selatan"], "Bali": ["Kabupaten Badung", "Kabupaten Bangli", "Kabupaten Buleleng", "Kabupaten Gianyar", "Kabupaten Jembrana", "Kabupaten Karangasem", "Kabupaten Klungkung", "Kabupaten Tabanan", "Kota Denpasar"], "Nusa Tenggara Barat": ["Kabupaten Bima", "Kabupaten Dompu", "Kabupaten Lombok Barat", "Kabupaten Lombok Tengah", "Kabupaten Lombok Timur", "Kabupaten Lombok Utara", "Kabupaten Sumbawa", "Kabupaten Sumbawa Barat", "Kota Bima", "Kota Mataram"], "Nusa Tenggara Timur": ["Kabupaten Alor", "Kabupaten Belu", "Kabupaten Ende", "Kabupaten Flores Timur", "Kabupaten Kupang", "Kabupaten Lembata", "Kabupaten Malaka", "Kabupaten Manggarai", "Kabupaten Manggarai Barat", "Kabupaten Manggarai Timur", "Kabupaten Nagekeo", "Kabupaten Ngada", "Kabupaten Rote Ndao", "Kabupaten Sabu Raijua", "Kabupaten Sikka", "Kabupaten Sumba Barat", "Kabupaten Sumba Barat Daya", "Kabupaten Sumba Tengah", "Kabupaten Sumba Timur", "Kabupaten Timor Tengah Selatan", "Kabupaten Timor Tengah Utara", "Kota Kupang"], "Kalimantan Barat": ["Kabupaten Bengkayang", "Kabupaten Kapuas Hulu", "Kabupaten Kayong Utara", "Kabupaten Ketapang", "Kabupaten Kubu Raya", "Kabupaten Landak", "Kabupaten Melawi", "Kabupaten Mempawah", "Kabupaten Sambas", "Kabupaten Sanggau", "Kabupaten Sekadau", "Kabupaten Sintang", "Kota Pontianak", "Kota Singkawang"], "Kalimantan Tengah": ["Kabupaten Barito Selatan", "Kabupaten Barito Timur", "Kabupaten Barito Utara", "Kabupaten Gunung Mas", "Kabupaten Kapuas", "Kabupaten Katingan", "Kabupaten Kotawaringin Barat", "Kabupaten Kotawaringin Timur", "Kabupaten Lamandau", "Kabupaten Murung Raya", "Kabupaten Pulang Pisau", "Kabupaten Seruyan", "Kabupaten Sukamara", "Kota Palangka Raya"], "Kalimantan Selatan": ["Kabupaten Balangan", "Kabupaten Banjar", "Kabupaten Barito Kuala", "Kabupaten Hulu Sungai Selatan", "Kabupaten Hulu Sungai Tengah", "Kabupaten Hulu Sungai Utara", "Kabupaten Kotabaru", "Kabupaten Tabalong", "Kabupaten Tanah Bumbu", "Kabupaten Tanah Laut", "Kabupaten Tapin", "Kota Banjarbaru", "Kota Banjarmasin"], "Kalimantan Timur": ["Kabupaten Berau", "Kabupaten Kutai Barat", "Kabupaten Kutai Kartanegara", "Kabupaten Kutai Timur", "Kabupaten Mahakam Ulu", "Kabupaten Paser", "Kabupaten Penajam Paser Utara", "Kota Balikpapan", "Kota Bontang", "Kota Samarinda"], "Kalimantan Utara": ["Kabupaten Bulungan", "Kabupaten Malinau", "Kabupaten Nunukan", "Kabupaten Tana Tidung", "Kota Tarakan"], "Sulawesi Utara": ["Kabupaten Bolaang Mongondow", "Kabupaten Bolaang Mongondow Selatan", "Kabupaten Bolaang Mongondow Timur", "Kabupaten Bolaang Mongondow Utara", "Kabupaten Kepulauan Sangihe", "Kabupaten Kepulauan Siau Tagulandang Biaro", "Kabupaten Kepulauan Talaud", "Kabupaten Minahasa", "Kabupaten Minahasa Selatan", "Kabupaten Minahasa Tenggara", "Kabupaten Minahasa Utara", "Kota Bitung", "Kota Kotamobagu", "Kota Manado", "Kota Tomohon"], "Sulawesi Tengah": ["Kabupaten Banggai", "Kabupaten Banggai Kepulauan", "Kabupaten Banggai Laut", "Kabupaten Buol", "Kabupaten Donggala", "Kabupaten Morowali", "Kabupaten Morowali Utara", "Kabupaten Parigi Moutong", "Kabupaten Poso", "Kabupaten Sigi", "Kabupaten Tojo Una-Una", "Kabupaten Tolitoli", "Kota Palu"], "Sulawesi Selatan": ["Kabupaten Bantaeng", "Kabupaten Barru", "Kabupaten Bone", "Kabupaten Bulukumba", "Kabupaten Enrekang", "Kabupaten Gowa", "Kabupaten Jeneponto", "Kabupaten Kepulauan Selayar", "Kabupaten Luwu", "Kabupaten Luwu Timur", "Kabupaten Luwu Utara", "Kabupaten Maros", "Kabupaten Pangkajene dan Kepulauan", "Kabupaten Pinrang", "Kabupaten Sidenreng Rappang", "Kabupaten Sinjai", "Kabupaten Soppeng", "Kabupaten Takalar", "Kabupaten Tana Toraja", "Kabupaten Toraja Utara", "Kabupaten Wajo", "Kota Makassar", "Kota Parepare", "Kota Palopo"], "Sulawesi Tenggara": ["Kabupaten Bombana", "Kabupaten Buton", "Kabupaten Buton Selatan", "Kabupaten Buton Tengah", "Kabupaten Buton Utara", "Kabupaten Kolaka", "Kabupaten Kolaka Timur", "Kabupaten Kolaka Utara", "Kabupaten Konawe", "Kabupaten Konawe Kepulauan", "Kabupaten Konawe Selatan", "Kabupaten Konawe Utara", "Kabupaten Muna", "Kabupaten Muna Barat", "Kabupaten Wakatobi", "Kota Baubau", "Kota Kendari"], "Gorontalo": ["Kabupaten Boalemo", "Kabupaten Bone Bolango", "Kabupaten Gorontalo", "Kabupaten Gorontalo Utara", "Kabupaten Pohuwato", "Kota Gorontalo"], "Sulawesi Barat": ["Kabupaten Majene", "Kabupaten Mamasa", "Kabupaten Mamuju", "Kabupaten Mamuju Tengah", "Kabupaten Pasangkayu", "Kabupaten Polewali Mandar"], "Maluku": ["Kabupaten Buru", "Kabupaten Buru Selatan", "Kabupaten Kepulauan Aru", "Kabupaten Kepulauan Tanimbar", "Kabupaten Maluku Barat Daya", "Kabupaten Maluku Tengah", "Kabupaten Maluku Tenggara", "Kabupaten Seram Bagian Barat", "Kabupaten Seram Bagian Timur", "Kota Ambon", "Kota Tual"], "Maluku Utara": ["Kabupaten Halmahera Barat", "Kabupaten Halmahera Selatan", "Kabupaten Halmahera Tengah", "Kabupaten Halmahera Timur", "Kabupaten Halmahera Utara", "Kabupaten Kepulauan Sula", "Kabupaten Pulau Morotai", "Kabupaten Pulau Taliabu", "Kota Ternate", "Kota Tidore Kepulauan"], "Papua": ["Kabupaten Biak Numfor", "Kabupaten Jayapura", "Kabupaten Keerom", "Kabupaten Kepulauan Yapen", "Kabupaten Mamberamo Raya", "Kabupaten Sarmi", "Kabupaten Supiori", "Kabupaten Waropen", "Kota Jayapura"], "Papua Barat": ["Kabupaten Fakfak", "Kabupaten Kaimana", "Kabupaten Manokwari", "Kabupaten Manokwari Selatan", "Kabupaten Pegunungan Arfak", "Kabupaten Teluk Bintuni", "Kabupaten Teluk Wondama"], "Papua Selatan": ["Kabupaten Asmat", "Kabupaten Boven Digoel", "Kabupaten Mappi", "Kabupaten Merauke"], "Papua Tengah": ["Kabupaten Deiyai", "Kabupaten Dogiyai", "Kabupaten Intan Jaya", "Kabupaten Mimika", "Kabupaten Nabire", "Kabupaten Paniai", "Kabupaten Puncak", "Kabupaten Puncak Jaya"], "Papua Pegunungan": ["Kabupaten Jayawijaya", "Kabupaten Lanny Jaya", "Kabupaten Mamberamo Tengah", "Kabupaten Nduga", "Kabupaten Pegunungan Bintang", "Kabupaten Tolikara", "Kabupaten Yalimo", "Kabupaten Yahukimo"], "Papua Barat Daya": ["Kabupaten Maybrat", "Kabupaten Raja Ampat", "Kabupaten Sorong", "Kabupaten Sorong Selatan", "Kabupaten Tambrauw", "Kota Sorong"]};
+
 </script>
 <script>
 "use strict";
@@ -676,6 +843,24 @@ function tampilPopup(judul, isi){
   el("popupOverlay").classList.add("show");
 }
 function tutupPopup(){ el("popupOverlay").classList.remove("show"); }
+
+/* ===== Popup konfirmasi Ya / Batal (untuk hapus & tindakan lain) ===== */
+var __konfirmasiYa = null;
+function tanyaKonfirmasi(judul, isi, onYa){
+  el("popupKonfirmasiJudul").textContent = judul;
+  el("popupKonfirmasiIsi").textContent = isi;
+  __konfirmasiYa = (typeof onYa === "function") ? onYa : null;
+  el("popupKonfirmasiOverlay").classList.add("show");
+}
+function tutupKonfirmasi(){
+  el("popupKonfirmasiOverlay").classList.remove("show");
+  __konfirmasiYa = null;
+}
+async function jawabKonfirmasiYa(){
+  var fn = __konfirmasiYa;
+  tutupKonfirmasi();
+  if(fn){ try{ await fn(); }catch(e){ tampilPopup("Belum bisa memproses", pesanRamah(e)); } }
+}
 function pesanRamah(err){
   var m = String((err && err.message) || err || "");
   if(/hanya pemilik aplikasi/i.test(m)) return "Dashboard ini hanya untuk pemilik aplikasi.\nHubungi pemilik aplikasi bila Anda merasa seharusnya bisa masuk.";
@@ -735,6 +920,14 @@ function tampilkanKotakSetup(){
   if(!box) return;
   var ta = el("sqlText");
   if(ta && !ta.value) ta.value = SQL_TEXT;
+  box.classList.remove("hidden");
+  tampilkanKotakSetupPersetujuan();
+}
+function tampilkanKotakSetupPersetujuan(){
+  var box = el("kotakSetupPersetujuan");
+  if(!box) return;
+  var ta = el("sqlTextPersetujuan");
+  if(ta && !ta.value) ta.value = SQL_PERSETUJUAN;
   box.classList.remove("hidden");
 }
 
@@ -860,7 +1053,7 @@ function tampilLayar(nama){
   S.layar = nama;
   var btns = document.querySelectorAll("#tabbar button");
   btns.forEach(function(b){ b.classList.toggle("aktif", b.getAttribute("data-layar") === nama); });
-  ["ringkasan","pertumbuhan","aktivitas","pengguna","sistem"].forEach(function(l){
+  ["ringkasan","pertumbuhan","aktivitas","pengguna","sistem","kelola"].forEach(function(l){
     el("layar" + l.charAt(0).toUpperCase() + l.slice(1)).classList.toggle("aktif", l === nama);
   });
 }
@@ -880,6 +1073,7 @@ async function muatLayarAktif(){
   if(S.layar === "aktivitas") return muatAktivitas();
   if(S.layar === "pengguna") return muatPengguna(true);
   if(S.layar === "sistem") return muatSistem();
+  if(S.layar === "kelola") return muatKelola();
   return {ok:false};
 }
 </script>
@@ -1170,6 +1364,300 @@ function renderContohSistem(){
   el("contohSistem").classList.remove("hidden");
 }
 
+/* ===== Layar 6: Kelola pengguna (persetujuan admin) ===== */
+/* Hanya pemilik yang bisa sampai ke layar ini (seluruh dashboard di balik
+   periksaAkses). Semua tulis di sini memakai hak pemilik atas tabel izin:
+   admin TIDAK PERNAH membuat akun atau mengatur kata sandi siapa pun —
+   pengguna mendaftar sendiri; di sini Bapak hanya menyetujui atau
+   menonaktifkan baris izinnya. */
+function pesanSetupKelolaHtml(){
+  return '<div class="warn-box"><p><strong>Fitur ini belum aktif — pengaturan cloud belum dijalankan.</strong></p><p style="margin-top:6px">Daftar ini belum bisa ditampilkan karena pengaturan cloud untuk persetujuan pengguna belum dijalankan. Salinan pengaturannya ada di layar Sistem.</p></div>';
+}
+function tombolAksiKelola(aksi, email, kode, aktif){
+  var lbl = aktif ? "Nonaktifkan" : "Aktifkan";
+  return '<button type="button" class="ghost kecil" data-kelola-aksi="' + aksi + '-toggle" data-email="' + esc(email) + '"' + (kode ? ' data-kode="' + esc(kode) + '"' : '') + ' data-aktif="' + (aktif ? "1" : "0") + '">' + lbl + '</button>'
+    + ' <button type="button" class="ghost kecil" data-kelola-aksi="' + aksi + '-hapus" data-email="' + esc(email) + '"' + (kode ? ' data-kode="' + esc(kode) + '"' : '') + '>Hapus</button>';
+}
+async function muatKelola(){
+  var r1 = await muatKelolaMarketing();
+  var r2 = await muatKelolaPemda();
+  var r3 = await muatKelolaInvestor();
+  return {ok: !!(r1.ok && r2.ok && r3.ok), marketing:r1, pemda:r2, investor:r3};
+}
+async function muatKelolaMarketing(){
+  var box = el("kelolaMarketingIsi");
+  box.innerHTML = '<p class="muted">Memuat daftar marketing…</p>';
+  await isiPilihanKodeMarketing();
+  var c = getClient();
+  if(!c){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetup(); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_marketing").select("email,kode_marketing,nama,aktif,dibuat_pada").order("dibuat_pada", {ascending:false}); }
+  catch(e){
+    if(apakahErrorSetup(e)){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetup(); return {ok:false, setup:true, error:e}; }
+    box.innerHTML = '<p class="muted">Daftar marketing belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(e)); return {ok:false, error:e};
+  }
+  if(r.error){
+    if(apakahErrorSetup(r.error)){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetup(); return {ok:false, setup:true, error:r.error}; }
+    box.innerHTML = '<p class="muted">Daftar marketing belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(r.error)); return {ok:false, error:r.error};
+  }
+  var rows = Array.isArray(r.data) ? r.data : [];
+  if(!rows.length){ box.innerHTML = '<p class="muted">Belum ada marketing yang disetujui.</p>'; return {ok:true, data:rows}; }
+  var html = '<table><thead><tr><th>Email</th><th>Kode marketing</th><th>Nama</th><th>Aktif</th><th>Sejak</th><th>Tindakan</th></tr></thead><tbody>';
+  rows.forEach(function(x){
+    html += '<tr><td>' + esc(x.email || "—") + '</td><td>' + esc(x.kode_marketing || "—") + '</td><td>' + esc(x.nama || "—") + '</td><td>' + (x.aktif ? "Ya" : "Tidak") + '</td><td>' + fmtTanggal(x.dibuat_pada) + '</td><td>' + tombolAksiKelola("marketing", x.email, x.kode_marketing, x.aktif) + '</td></tr>';
+  });
+  box.innerHTML = html + '</tbody></table>';
+  return {ok:true, data:rows};
+}
+async function isiPilihanKodeMarketing(){
+  var sel = el("kmKode");
+  if(!sel) return {ok:false};
+  var c = getClient();
+  if(!c){ sel.innerHTML = '<option value="">Pengaturan cloud belum dijalankan</option>'; return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("marketing_kode").select("kode,nama,aktif").eq("aktif", true).order("kode", {ascending:true}); }
+  catch(e){ sel.innerHTML = '<option value="">Kode belum bisa dimuat</option>'; return {ok:false, error:e}; }
+  if(r.error){ sel.innerHTML = '<option value="">Kode belum bisa dimuat</option>'; return {ok:false, error:r.error}; }
+  var rows = Array.isArray(r.data) ? r.data : [];
+  if(!rows.length){ sel.innerHTML = '<option value="">Belum ada kode aktif — buat dulu di layar Sistem</option>'; return {ok:true, data:rows}; }
+  sel.innerHTML = '<option value="">Pilih kode</option>';
+  rows.forEach(function(x){
+    var op = document.createElement("option");
+    op.value = x.kode; op.textContent = x.kode + (x.nama ? " — " + x.nama : "");
+    sel.appendChild(op);
+  });
+  return {ok:true, data:rows};
+}
+async function tambahMarketing(){
+  var email = String(el("kmEmail").value || "").trim().toLowerCase();
+  var kode = String(el("kmKode").value || "").trim().toUpperCase();
+  var nama = String(el("kmNama").value || "").trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ tampilPopup("Email belum benar","Periksa alamat email marketing, lalu coba lagi."); return {ok:false}; }
+  if(!kode){ tampilPopup("Kode belum dipilih","Pilih kode marketing yang dikawal orang ini."); return {ok:false}; }
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_marketing").insert([{email:email, kode_marketing:kode, nama:nama || null, aktif:true}]); }
+  catch(e){ tampilPopup("Belum bisa menambahkan", pesanRamah(e)); return {ok:false, error:e}; }
+  if(r.error){ tampilPopup("Belum bisa menambahkan", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  el("kmEmail").value = ""; el("kmNama").value = "";
+  await muatKelolaMarketing();
+  tampilPopup("Marketing ditambahkan","Email " + email + " kini disetujui memakai kode " + kode + ".");
+  return {ok:true};
+}
+async function toggleMarketing(email, kode, aktifBaru){
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_marketing").update({aktif:aktifBaru}).eq("email", email).eq("kode_marketing", kode); }
+  catch(e){ tampilPopup("Belum bisa mengubah", pesanRamah(e)); return {ok:false, error:e}; }
+  if(r.error){ tampilPopup("Belum bisa mengubah", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  await muatKelolaMarketing();
+  return {ok:true};
+}
+function hapusMarketing(email, kode){
+  tanyaKonfirmasi("Hapus penugasan ini?",
+    "Penugasan kode " + kode + " untuk " + email + " akan dihapus.\nOrang ini tidak bisa lagi masuk memakai kode itu.",
+    async function(){
+      var c = getClient();
+      if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+      var r;
+      try{ r = await c.from("akses_marketing").delete().eq("email", email).eq("kode_marketing", kode); }
+      catch(e){ tampilPopup("Belum bisa menghapus", pesanRamah(e)); return {ok:false, error:e}; }
+      if(r.error){ tampilPopup("Belum bisa menghapus", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+      await muatKelolaMarketing();
+      return {ok:true};
+    });
+}
+
+/* ----- Pemda ----- */
+function isiPilihanProvinsiKelola(){
+  var sel = el("kpProvinsi");
+  if(!sel) return;
+  if(sel.options.length > 1) return;
+  Object.keys(WILAYAH).forEach(function(p){
+    var op = document.createElement("option");
+    op.value = p; op.textContent = p;
+    sel.appendChild(op);
+  });
+}
+function isiKotaKelola(prov){
+  var sel = el("kpKota");
+  if(!sel) return;
+  sel.innerHTML = "";
+  if(!prov){
+    var o = document.createElement("option"); o.value = ""; o.textContent = "Pilih provinsi dulu"; sel.appendChild(o);
+    sel.disabled = true; sel.value = "";
+    return;
+  }
+  sel.disabled = false;
+  var o2 = document.createElement("option"); o2.value = ""; o2.textContent = "Seluruh kota di provinsi ini"; sel.appendChild(o2);
+  (WILAYAH[prov] || []).forEach(function(k){
+    var op = document.createElement("option"); op.value = k; op.textContent = k; sel.appendChild(op);
+  });
+}
+async function muatKelolaPemda(){
+  var box = el("kelolaPemdaIsi");
+  box.innerHTML = '<p class="muted">Memuat daftar Pemda…</p>';
+  var c = getClient();
+  if(!c){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetup(); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_pemda").select("email,peran,provinsi,kota,aktif,dibuat_pada").order("dibuat_pada", {ascending:false}); }
+  catch(e){
+    if(apakahErrorSetup(e)){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetup(); return {ok:false, setup:true, error:e}; }
+    box.innerHTML = '<p class="muted">Daftar Pemda belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(e)); return {ok:false, error:e};
+  }
+  if(r.error){
+    if(apakahErrorSetup(r.error)){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetup(); return {ok:false, setup:true, error:r.error}; }
+    box.innerHTML = '<p class="muted">Daftar Pemda belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(r.error)); return {ok:false, error:r.error};
+  }
+  var rows = Array.isArray(r.data) ? r.data : [];
+  var tampil = rows.filter(function(x){ return String(x.email || "").toLowerCase() !== EMAIL_PEMILIK; });
+  if(!tampil.length){ box.innerHTML = '<p class="muted">Belum ada pengguna Pemda selain pemilik.</p>'; return {ok:true, data:tampil}; }
+  var html = '<table><thead><tr><th>Email</th><th>Peran</th><th>Provinsi</th><th>Kota / Kabupaten</th><th>Aktif</th><th>Sejak</th><th>Tindakan</th></tr></thead><tbody>';
+  tampil.forEach(function(x){
+    html += '<tr><td>' + esc(x.email || "—") + '</td><td>' + esc(x.peran || "—") + '</td><td>' + esc(x.provinsi || "—") + '</td><td>' + esc(x.kota || "Seluruh kota") + '</td><td>' + (x.aktif ? "Ya" : "Tidak") + '</td><td>' + fmtTanggal(x.dibuat_pada) + '</td><td>' + tombolAksiKelola("pemda", x.email, null, x.aktif) + '</td></tr>';
+  });
+  box.innerHTML = html + '</tbody></table>';
+  return {ok:true, data:tampil};
+}
+async function tambahPemda(){
+  var email = String(el("kpEmail").value || "").trim().toLowerCase();
+  var peran = String(el("kpPeran").value || "dinas");
+  var provinsi = String(el("kpProvinsi").value || "").trim();
+  var kota = String(el("kpKota").value || "").trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ tampilPopup("Email belum benar","Periksa alamat email pengguna Pemda, lalu coba lagi."); return {ok:false}; }
+  if(!provinsi){ tampilPopup("Provinsi belum dipilih","Pilih provinsi yang boleh dilihat pengguna ini."); return {ok:false}; }
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_pemda").insert([{email:email, peran:peran, provinsi:provinsi, kota:kota || null, aktif:true}]); }
+  catch(e){ tampilPopup("Belum bisa menambahkan", pesanRamah(e)); return {ok:false, error:e}; }
+  if(r.error){ tampilPopup("Belum bisa menambahkan", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  el("kpEmail").value = ""; isiKotaKelola(provinsi);
+  await muatKelolaPemda();
+  tampilPopup("Pengguna Pemda ditambahkan","Email " + email + " kini disetujui sebagai " + peran + " untuk " + provinsi + ".");
+  return {ok:true};
+}
+async function togglePemda(email, aktifBaru){
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_pemda").update({aktif:aktifBaru}).eq("email", email); }
+  catch(e){ tampilPopup("Belum bisa mengubah", pesanRamah(e)); return {ok:false, error:e}; }
+  if(r.error){ tampilPopup("Belum bisa mengubah", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  await muatKelolaPemda();
+  return {ok:true};
+}
+function hapusPemda(email){
+  tanyaKonfirmasi("Hapus pengguna Pemda ini?",
+    "Akses Pemda untuk " + email + " akan dihapus.\nOrang ini tidak bisa lagi masuk Dashboard Pemda.",
+    async function(){
+      var c = getClient();
+      if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+      var r;
+      try{ r = await c.from("akses_pemda").delete().eq("email", email); }
+      catch(e){ tampilPopup("Belum bisa menghapus", pesanRamah(e)); return {ok:false, error:e}; }
+      if(r.error){ tampilPopup("Belum bisa menghapus", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+      await muatKelolaPemda();
+      return {ok:true};
+    });
+}
+
+/* ----- Investor ----- */
+async function muatKelolaInvestor(){
+  var box = el("kelolaInvestorIsi");
+  box.innerHTML = '<p class="muted">Memuat daftar investor…</p>';
+  var c = getClient();
+  if(!c){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetupPersetujuan(); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_investor").select("email,nama,aktif,dibuat_pada").order("dibuat_pada", {ascending:false}); }
+  catch(e){
+    if(apakahErrorSetup(e)){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetupPersetujuan(); return {ok:false, setup:true, error:e}; }
+    box.innerHTML = '<p class="muted">Daftar investor belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(e)); return {ok:false, error:e};
+  }
+  if(r.error){
+    if(apakahErrorSetup(r.error)){ box.innerHTML = pesanSetupKelolaHtml(); tampilkanKotakSetupPersetujuan(); return {ok:false, setup:true, error:r.error}; }
+    box.innerHTML = '<p class="muted">Daftar investor belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(r.error)); return {ok:false, error:r.error};
+  }
+  var rows = Array.isArray(r.data) ? r.data : [];
+  if(!rows.length){ box.innerHTML = '<p class="muted">Belum ada investor yang disetujui.</p>'; return {ok:true, data:rows}; }
+  var html = '<table><thead><tr><th>Email</th><th>Nama</th><th>Aktif</th><th>Sejak</th><th>Tindakan</th></tr></thead><tbody>';
+  rows.forEach(function(x){
+    html += '<tr><td>' + esc(x.email || "—") + '</td><td>' + esc(x.nama || "—") + '</td><td>' + (x.aktif ? "Ya" : "Tidak") + '</td><td>' + fmtTanggal(x.dibuat_pada) + '</td><td>' + tombolAksiKelola("investor", x.email, null, x.aktif) + '</td></tr>';
+  });
+  box.innerHTML = html + '</tbody></table>';
+  return {ok:true, data:rows};
+}
+async function tambahInvestor(){
+  var email = String(el("kiEmail").value || "").trim().toLowerCase();
+  var nama = String(el("kiNama").value || "").trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ tampilPopup("Email belum benar","Periksa alamat email investor, lalu coba lagi."); return {ok:false}; }
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_investor").insert([{email:email, nama:nama || null, aktif:true}]); }
+  catch(e){ tampilPopup("Belum bisa menambahkan", pesanRamah(e)); return {ok:false, error:e}; }
+  if(r.error){ tampilPopup("Belum bisa menambahkan", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  el("kiEmail").value = ""; el("kiNama").value = "";
+  await muatKelolaInvestor();
+  tampilPopup("Investor ditambahkan","Email " + email + " kini disetujui masuk Portal Investor.");
+  return {ok:true};
+}
+async function toggleInvestor(email, aktifBaru){
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("akses_investor").update({aktif:aktifBaru}).eq("email", email); }
+  catch(e){ tampilPopup("Belum bisa mengubah", pesanRamah(e)); return {ok:false, error:e}; }
+  if(r.error){ tampilPopup("Belum bisa mengubah", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+  await muatKelolaInvestor();
+  return {ok:true};
+}
+function hapusInvestor(email){
+  tanyaKonfirmasi("Hapus investor ini?",
+    "Akses investor untuk " + email + " akan dihapus.\nOrang ini tidak bisa lagi masuk Portal Investor.",
+    async function(){
+      var c = getClient();
+      if(!c){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+      var r;
+      try{ r = await c.from("akses_investor").delete().eq("email", email); }
+      catch(e){ tampilPopup("Belum bisa menghapus", pesanRamah(e)); return {ok:false, error:e}; }
+      if(r.error){ tampilPopup("Belum bisa menghapus", pesanRamah(r.error)); return {ok:false, error:r.error}; }
+      await muatKelolaInvestor();
+      return {ok:true};
+    });
+}
+async function kelolaAksiDariTombol(btn){
+  var aksi = btn.getAttribute("data-kelola-aksi");
+  var email = btn.getAttribute("data-email");
+  var kode = btn.getAttribute("data-kode");
+  var aktif = btn.getAttribute("data-aktif") === "1";
+  if(aksi === "marketing-toggle") return toggleMarketing(email, kode, !aktif);
+  if(aksi === "marketing-hapus") return hapusMarketing(email, kode);
+  if(aksi === "pemda-toggle") return togglePemda(email, !aktif);
+  if(aksi === "pemda-hapus") return hapusPemda(email);
+  if(aksi === "investor-toggle") return toggleInvestor(email, !aktif);
+  if(aksi === "investor-hapus") return hapusInvestor(email);
+  return {ok:false};
+}
+function salinSqlPersetujuan(){
+  var ta = el("sqlTextPersetujuan");
+  if(!ta) return false;
+  ta.value = SQL_PERSETUJUAN;
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(SQL_PERSETUJUAN).then(function(){
+        tampilPopup("SQL tersalin","SQL persetujuan pengguna sudah tersalin.\nTempel di SQL Editor cloud lalu klik Run.");
+      }, function(){ tampilPopup("Salin manual","Tandai seluruh teks SQL, salin, lalu tempel di SQL Editor cloud."); });
+      return true;
+    }
+  }catch(e){}
+  try{ ta.select(); if(document.execCommand) document.execCommand("copy"); }catch(e){}
+  tampilPopup("SQL tersalin","SQL persetujuan pengguna sudah tersalin.\nTempel di SQL Editor cloud lalu klik Run.");
+  return true;
+}
+
 /* ===== Tampilkan contoh / tutup contoh ===== */
 var RENDER_CONTOH = {ringkasan:renderContohRingkasan, pertumbuhan:renderContohPertumbuhan, aktivitas:renderContohAktivitas, pengguna:renderContohPengguna, sistem:renderContohSistem};
 function tampilContoh(layar){
@@ -1214,6 +1702,15 @@ function bindEvents(){
   el("btnSimpanSandi").addEventListener("click", async function(){ await simpanSandiBaru(el("sandiBaru").value, el("sandiBaru2").value); });
   el("btnKeluar").addEventListener("click", keluar);
   el("btnSalinSql").addEventListener("click", salinSql);
+  el("btnSalinSqlPersetujuan").addEventListener("click", salinSqlPersetujuan);
+  el("btnKonfirmasiYa").addEventListener("click", jawabKonfirmasiYa);
+  el("btnKonfirmasiBatal").addEventListener("click", tutupKonfirmasi);
+  el("popupKonfirmasiOverlay").addEventListener("click", function(e){ if(e.target === el("popupKonfirmasiOverlay")) tutupKonfirmasi(); });
+  el("btnTambahMarketing").addEventListener("click", async function(){ await tambahMarketing(); });
+  el("btnTambahPemda").addEventListener("click", async function(){ await tambahPemda(); });
+  el("btnTambahInvestor").addEventListener("click", async function(){ await tambahInvestor(); });
+  isiPilihanProvinsiKelola();
+  el("kpProvinsi").addEventListener("change", function(){ isiKotaKelola(el("kpProvinsi").value); });
   el("btnTumbuh7").addEventListener("click", async function(){
     S.tumbuhHari = 7;
     el("btnTumbuh7").classList.remove("ghost"); el("btnTumbuh30").classList.add("ghost");
@@ -1238,6 +1735,8 @@ function bindEvents(){
   document.addEventListener("click", function(e){
     var t = e.target;
     if(t && t.getAttribute){
+      var k = t.getAttribute("data-kelola-aksi");
+      if(k){ kelolaAksiDariTombol(t); return; }
       var c = t.getAttribute("data-contoh");
       if(c){ tampilContoh(c); return; }
       var tc = t.getAttribute("data-tutup-contoh");
@@ -1269,7 +1768,7 @@ else { init(); }
 window.__admin = {
   S:S, ADMIN_URL:ADMIN_URL, EMAIL_PEMILIK:EMAIL_PEMILIK,
   CLOUD_URL:CLOUD_URL, CLOUD_ANON:CLOUD_ANON, SQL_TEXT:SQL_TEXT, CONTOH:CONTOH,
-  SEKTOR_LABEL:SEKTOR_LABEL,
+  SEKTOR_LABEL:SEKTOR_LABEL, SQL_PERSETUJUAN:SQL_PERSETUJUAN, WILAYAH:WILAYAH,
   setClient:function(m){ __client = m; },
   getClient:getClient,
   masuk:masuk, daftar:daftar, lupaSandi:lupaSandi, simpanSandiBaru:simpanSandiBaru, keluar:keluar,
@@ -1280,8 +1779,18 @@ window.__admin = {
   tampilContoh:tampilContoh, tutupContoh:tutupContoh,
   tampilLayar:tampilLayar, tampilDashboard:tampilDashboard, muatLayarAktif:muatLayarAktif,
   tampilPopup:tampilPopup, tutupPopup:tutupPopup, salinSql:salinSql,
+  salinSqlPersetujuan:salinSqlPersetujuan,
+  tanyaKonfirmasi:tanyaKonfirmasi, tutupKonfirmasi:tutupKonfirmasi, jawabKonfirmasiYa:jawabKonfirmasiYa,
+  muatKelola:muatKelola, muatKelolaMarketing:muatKelolaMarketing,
+  muatKelolaPemda:muatKelolaPemda, muatKelolaInvestor:muatKelolaInvestor,
+  tambahMarketing:tambahMarketing, tambahPemda:tambahPemda, tambahInvestor:tambahInvestor,
+  toggleMarketing:toggleMarketing, togglePemda:togglePemda, toggleInvestor:toggleInvestor,
+  hapusMarketing:hapusMarketing, hapusPemda:hapusPemda, hapusInvestor:hapusInvestor,
+  isiKotaKelola:isiKotaKelola, isiPilihanProvinsiKelola:isiPilihanProvinsiKelola,
+  isiPilihanKodeMarketing:isiPilihanKodeMarketing,
   apakahErrorSetup:apakahErrorSetup, fmtTanggal:fmtTanggal, fmtHari:fmtHari,
-  labelJenis:labelJenis, tampilkanKotakSetup:tampilkanKotakSetup
+  labelJenis:labelJenis, tampilkanKotakSetup:tampilkanKotakSetup,
+  tampilkanKotakSetupPersetujuan:tampilkanKotakSetupPersetujuan
 };
 </script>
 </body>
