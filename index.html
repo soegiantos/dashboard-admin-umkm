@@ -1879,7 +1879,7 @@ else { init(); }
 (function(){
   var KUNCI_TOMBOL = "admin-tombol-diklik:v1";
   /* Tombol panel masuk yang hanya berpindah panel (bukan aksi kirim). */
-  var ID_NAVIGASI = ["btnKeDaftar", "btnBatalDaftar", "btnBatalLupa"];
+  var ID_NAVIGASI = [];
   function bacaSet(){ try{ var s = localStorage.getItem(KUNCI_TOMBOL); if(!s) return {}; var o = JSON.parse(s); return (o && typeof o === "object") ? o : {}; }catch(e){ return {}; } }
   function simpanSet(o){ try{ localStorage.setItem(KUNCI_TOMBOL, JSON.stringify(o)); }catch(e){} }
   function bolehDitandai(el){
@@ -1888,7 +1888,6 @@ else { init(); }
     if(el.type === "submit") return false;
     if(el.classList.contains("linkbtn")) return false;
     if(el.closest("#tabbar")) return true;
-    if(el.hasAttribute("data-contoh") || el.hasAttribute("data-tutup-contoh")) return true;
     if(el.id && ID_NAVIGASI.indexOf(el.id) >= 0) return true;
     return false;
   }
@@ -1897,8 +1896,6 @@ else { init(); }
     if(el.id) return "id:" + el.id;
     var v;
     if((v = el.getAttribute("data-layar"))) return "layar:" + v;
-    if((v = el.getAttribute("data-contoh"))) return "contoh:" + v;
-    if((v = el.getAttribute("data-tutup-contoh"))) return "tutup-contoh:" + v;
     return null;
   }
   function terapkanDariSimpanan(){
