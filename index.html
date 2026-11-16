@@ -54,6 +54,12 @@ table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.92rem}
 th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
 th{color:var(--gold);font-weight:600}
 td{color:var(--ink-soft)}
+.bayar-kartu{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+.bayar-kartu .baris{display:flex;gap:8px;font-size:.92rem;padding:3px 0}
+.bayar-kartu .baris .k{flex:0 0 130px;color:var(--ink-mut)}
+.bayar-kartu .baris .v{flex:1;color:var(--ink)}
+.bayar-kartu .baris .v.kuat{font-weight:700;color:var(--gold-soft)}
+.bayar-kartu input[type=text]{margin-top:8px}
 nav.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 nav.tabbar button{flex:1 1 150px;background:var(--surface);color:var(--ink-soft);border:1px solid var(--line);padding:11px 8px;font-size:.93rem;border-radius:999px;min-height:48px;box-shadow:var(--shadow);transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease,filter .18s ease}
 nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--gold)}
@@ -166,6 +172,7 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
       <button type="button" data-layar="pengguna">Pengguna</button>
       <button type="button" data-layar="sistem">Sistem</button>
       <button type="button" data-layar="kelola">Kelola pengguna</button>
+      <button type="button" data-layar="bayar">Verifikasi pembayaran</button>
     </nav>
 
     <section class="layar aktif" id="layarRingkasan">
@@ -306,6 +313,17 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
             <button id="btnTambahInvestor" type="button">Tambah investor</button>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="layar" id="layarBayar">
+      <div class="card">
+        <h2>Verifikasi pembayaran</h2>
+        <p>Pembayaran pengguna yang masuk lewat BSI ditampilkan di sini. Buka bukti gambarnya, lalu konfirmasi bila sudah benar atau tolak bila tidak cocok.</p>
+        <div class="row" style="margin-top:12px">
+          <button id="btnMuatBayar" type="button" class="kecil">Muat ulang</button>
+        </div>
+        <div id="bayarIsi"><p class="muted">Memuat daftar pembayaran…</p></div>
       </div>
     </section>
   </section>
@@ -818,6 +836,7 @@ var SQL_PERSETUJUAN = [
 function el(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function fmtBil(n){ if(n==null||isNaN(n)) return "—"; return new Intl.NumberFormat("id-ID").format(Math.round(n)); }
+function fmtRp(n){ if(n==null||isNaN(n)) return "—"; return "Rp" + fmtBil(n); }
 function fmtTanggal(t){
   if(!t) return "—";
   try{
@@ -1069,7 +1088,7 @@ function tampilLayar(nama){
   S.layar = nama;
   var btns = document.querySelectorAll("#tabbar button");
   btns.forEach(function(b){ b.classList.toggle("aktif", b.getAttribute("data-layar") === nama); });
-  ["ringkasan","pertumbuhan","aktivitas","pengguna","sistem","kelola"].forEach(function(l){
+  ["ringkasan","pertumbuhan","aktivitas","pengguna","sistem","kelola","bayar"].forEach(function(l){
     el("layar" + l.charAt(0).toUpperCase() + l.slice(1)).classList.toggle("aktif", l === nama);
   });
 }
@@ -1090,6 +1109,7 @@ async function muatLayarAktif(){
   if(S.layar === "pengguna") return muatPengguna(true);
   if(S.layar === "sistem") return muatSistem();
   if(S.layar === "kelola") return muatKelola();
+  if(S.layar === "bayar") return muatBayar();
   return {ok:false};
 }
 </script>
@@ -1771,6 +1791,116 @@ function tutupContoh(layar){
   if(box){ box.classList.add("hidden"); box.innerHTML = ""; }
 }
 
+/* ===== Layar 7: Verifikasi pembayaran (BSI) ===== */
+/* Hanya menampilkan data pembayaran (email, nama usaha, jenis, paket,
+   jumlah, tanggal bayar, nama pengirim, nomor referensi, waktu diajukan,
+   bukti gambar). Tidak ada data keuangan usaha lain di layar ini. */
+function pesanSetupBayarHtml(){
+  return '<div class="warn-box"><p><strong>Fitur ini belum aktif — pengaturan cloud belum dijalankan.</strong></p><p style="margin-top:6px">Daftar pembayaran belum bisa ditampilkan karena pengaturan cloud untuk verifikasi pembayaran belum dijalankan. Pengaturan untuk fitur ini ada di file sql-pembayaran.sql — jalankan file itu di SQL Editor cloud, lalu muat ulang halaman ini.</p></div>';
+}
+function labelJenisBayar(j){
+  var s = String(j || "").toLowerCase();
+  if(/pegawai|tambahan/.test(s)) return "Tambahan pegawai";
+  return "Langganan";
+}
+function labelPaketBayar(p){
+  var s = String(p || "").trim().toLowerCase();
+  if(s === "mikro" || s === "kecil" || s === "menengah") return s.charAt(0).toUpperCase() + s.slice(1);
+  return "—";
+}
+function kartuBayar(x){
+  var id = x.id;
+  var bukti = x.bukti_path || x.bukti || x.path_bukti || "";
+  var html = '<div class="bayar-kartu">'
+    + '<div class="baris"><span class="k">Email</span><span class="v">' + esc(x.email || "—") + '</span></div>'
+    + '<div class="baris"><span class="k">Nama usaha</span><span class="v">' + esc(x.nama_usaha || "—") + '</span></div>'
+    + '<div class="baris"><span class="k">Jenis</span><span class="v">' + esc(labelJenisBayar(x.jenis)) + '</span></div>'
+    + '<div class="baris"><span class="k">Paket</span><span class="v">' + esc(labelPaketBayar(x.paket)) + '</span></div>'
+    + '<div class="baris"><span class="k">Jumlah</span><span class="v kuat">' + esc(fmtRp(x.jumlah)) + '</span></div>'
+    + '<div class="baris"><span class="k">Tanggal bayar</span><span class="v">' + fmtTanggal(x.tanggal_bayar || x.tanggal) + '</span></div>'
+    + '<div class="baris"><span class="k">Nama pengirim</span><span class="v">' + esc(x.nama_pengirim || x.pengirim || "—") + '</span></div>'
+    + '<div class="baris"><span class="k">Nomor referensi</span><span class="v">' + esc(x.no_referensi || x.nomor_referensi || x.referensi || "—") + '</span></div>'
+    + '<div class="baris"><span class="k">Waktu diajukan</span><span class="v">' + fmtTanggal(x.diajukan_pada || x.dibuat_pada || x.created_at) + '</span></div>';
+  if(bukti){
+    html += '<div class="row" style="margin-top:10px"><button type="button" class="ghost kecil" data-bayar-bukti="' + esc(bukti) + '">Lihat bukti</button></div>';
+  }else{
+    html += '<p class="muted" style="margin-top:10px">Belum ada bukti gambar.</p>';
+  }
+  html += '<label>Catatan singkat (boleh dikosongkan)</label>'
+    + '<input type="text" data-bayar-catatan placeholder="contoh: Sudah masuk, terima kasih.">'
+    + '<div class="row" style="margin-top:12px">'
+    + '<button type="button" data-bayar-aksi="konfirmasi" data-bayar-id="' + esc(id) + '">Konfirmasi</button>'
+    + '<button type="button" class="ghost" data-bayar-aksi="tolak" data-bayar-id="' + esc(id) + '">Tolak</button>'
+    + '</div></div>';
+  return html;
+}
+async function muatBayar(){
+  var box = el("bayarIsi");
+  box.innerHTML = '<p class="muted">Memuat daftar pembayaran…</p>';
+  var c = getClient();
+  if(!c){ box.innerHTML = pesanSetupBayarHtml(); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.rpc("daftar_pembayaran_menunggu", {}); }
+  catch(e){
+    if(apakahErrorSetup(e)){ box.innerHTML = pesanSetupBayarHtml(); return {ok:false, setup:true, error:e}; }
+    box.innerHTML = '<p class="muted">Daftar pembayaran belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(e)); return {ok:false, error:e};
+  }
+  if(r.error){
+    if(apakahErrorSetup(r.error)){ box.innerHTML = pesanSetupBayarHtml(); return {ok:false, setup:true, error:r.error}; }
+    box.innerHTML = '<p class="muted">Daftar pembayaran belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(r.error)); return {ok:false, error:r.error};
+  }
+  var rows = Array.isArray(r.data) ? r.data : [];
+  if(!rows.length){ box.innerHTML = '<p class="muted">Belum ada pembayaran yang menunggu verifikasi.</p>'; return {ok:true, data:rows}; }
+  box.innerHTML = rows.map(kartuBayar).join("");
+  return {ok:true, data:rows};
+}
+async function lihatBuktiBayar(path){
+  if(!path) return {ok:false};
+  if(/^https?:\/\//i.test(String(path))){ window.open(path, "_blank"); return {ok:true}; }
+  var c = getClient();
+  if(!c){ tampilPopup("Bukti belum bisa dibuka","Bukti gambar belum bisa dibuka — pengaturan cloud belum dijalankan. Coba lagi nanti."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.storage.from("bukti-bayar").createSignedUrl(path, 3600); }
+  catch(e){ tampilPopup("Bukti belum bisa dibuka","Bukti gambar belum bisa dibuka — periksa koneksi internet Anda, lalu coba lagi."); return {ok:false, error:e}; }
+  if(r.error || !r.data || !r.data.signedUrl){ tampilPopup("Bukti belum bisa dibuka","Bukti gambar belum bisa dibuka — periksa koneksi internet Anda, lalu coba lagi."); return {ok:false, error:r.error}; }
+  window.open(r.data.signedUrl, "_blank");
+  return {ok:true};
+}
+async function verifikasiPembayaran(id, setuju, catatan, btn){
+  var kartu = btn ? btn.closest(".bayar-kartu") : null;
+  var tombolKartu = kartu ? kartu.querySelectorAll("button") : [];
+  tombolKartu.forEach(function(b){ b.disabled = true; });
+  var hasil = await panggilRpc("verifikasi_pembayaran", {p_id:id, p_setuju:!!setuju, p_catatan:String(catatan || "")});
+  if(!hasil.ok){
+    tombolKartu.forEach(function(b){ b.disabled = false; });
+    if(hasil.setup){ tampilPopup("Fitur ini belum aktif","Fitur ini belum aktif — pengaturan cloud belum dijalankan. Pengaturan untuk fitur ini ada di file sql-pembayaran.sql."); }
+    else { tampilPopup("Belum bisa memproses", pesanRamah(hasil.error)); }
+    return hasil;
+  }
+  var d = hasil.data;
+  if(d && typeof d === "object" && d.ok === false){
+    tombolKartu.forEach(function(b){ b.disabled = false; });
+    tampilPopup("Belum bisa memproses", String(d.pesan || d.message || "Pembayaran ini belum bisa diproses. Coba lagi sebentar lagi."));
+    return {ok:false, data:d};
+  }
+  var pesan = (d && typeof d === "object" && (d.pesan || d.message))
+    ? String(d.pesan || d.message)
+    : (setuju ? "Pembayaran dikonfirmasi — langganan pengguna sudah aktif." : "Pembayaran ditolak.");
+  tampilPopup(setuju ? "Pembayaran dikonfirmasi" : "Pembayaran ditolak", pesan);
+  await muatBayar();
+  return {ok:true, data:d};
+}
+function bayarAksiDariTombol(btn){
+  var aksi = btn.getAttribute("data-bayar-aksi");
+  var id = btn.getAttribute("data-bayar-id");
+  var kartu = btn.closest(".bayar-kartu");
+  var inp = kartu ? kartu.querySelector("input[data-bayar-catatan]") : null;
+  var catatan = inp ? String(inp.value || "").trim() : "";
+  if(aksi === "konfirmasi") return verifikasiPembayaran(id, true, catatan, btn);
+  if(aksi === "tolak") return verifikasiPembayaran(id, false, catatan, btn);
+  return {ok:false};
+}
+
 /* ===== Init & event ===== */
 function hashParam(k){ try{ return new URLSearchParams(String(window.location.hash||"").replace(/^#/,"")).get(k); }catch(e){ return null; } }
 function salinSql(){
@@ -1827,6 +1957,7 @@ function bindEvents(){
     S.penggunaOffset += 50;
     await muatPengguna(false);
   });
+  el("btnMuatBayar").addEventListener("click", async function(){ await muatBayar(); });
   document.querySelectorAll("#tabbar button").forEach(function(b){
     b.addEventListener("click", async function(){
       tampilLayar(b.getAttribute("data-layar"));
@@ -1838,6 +1969,10 @@ function bindEvents(){
     if(t && t.getAttribute){
       var k = t.getAttribute("data-kelola-aksi");
       if(k){ kelolaAksiDariTombol(t); return; }
+      var ba = t.getAttribute("data-bayar-aksi");
+      if(ba){ bayarAksiDariTombol(t); return; }
+      var bk = t.getAttribute("data-bayar-bukti");
+      if(bk){ lihatBuktiBayar(bk); return; }
       var sk = t.getAttribute("data-salin-kode");
       if(sk){ salinKodeBaru(sk); return; }
       var c = t.getAttribute("data-contoh");
@@ -1954,6 +2089,7 @@ window.__admin = {
   tanyaKonfirmasi:tanyaKonfirmasi, tutupKonfirmasi:tutupKonfirmasi, jawabKonfirmasiYa:jawabKonfirmasiYa,
   muatKelola:muatKelola, muatKelolaMarketing:muatKelolaMarketing,
   muatKelolaPemda:muatKelolaPemda, muatKelolaInvestor:muatKelolaInvestor,
+  muatBayar:muatBayar, verifikasiPembayaran:verifikasiPembayaran, lihatBuktiBayar:lihatBuktiBayar,
   tambahMarketing:tambahMarketing, tambahPemda:tambahPemda, tambahInvestor:tambahInvestor,
   buatKodeMarketing:buatKodeMarketing, buatKodeBaru:buatKodeBaru, salinKodeBaru:salinKodeBaru,
   toggleMarketing:toggleMarketing, togglePemda:togglePemda, toggleInvestor:toggleInvestor,
