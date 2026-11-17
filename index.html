@@ -185,6 +185,7 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
       <button type="button" data-layar="sistem">Sistem</button>
       <button type="button" data-layar="kelola">Kelola pengguna</button>
       <button type="button" data-layar="bayar">Verifikasi pembayaran</button>
+      <button type="button" data-layar="pengumuman">Pengumuman</button>
     </nav>
 
     <section class="layar aktif" id="layarRingkasan">
@@ -369,6 +370,38 @@ nav.tabbar button.aktif{background:var(--gold);color:#1a1405;border-color:var(--
           <span class="muted" id="stempelBayarTerverifikasi"></span>
         </div>
         <div id="bayarTerverifikasiIsi"><p class="muted">Memuat daftar yang sudah diverifikasi…</p></div>
+      </div>
+    </section>
+
+    <section class="layar" id="layarPengumuman">
+      <div class="card">
+        <h2>Pengumuman</h2>
+        <p>Kirim pengumuman ke semua pengguna UMKM atau ke satu pengguna tertentu. Pengumuman tampil di layar utama pengguna.</p>
+        <h3>Kirim pengumuman baru</h3>
+        <label for="pgJudul">Judul</label>
+        <input type="text" id="pgJudul" placeholder="contoh: Libur Lebaran">
+        <label for="pgIsi">Isi</label>
+        <textarea id="pgIsi" style="min-height:120px" placeholder="contoh: Selama libur, aplikasi tetap bisa dipakai seperti biasa."></textarea>
+        <label>Tujuan pengumuman</label>
+        <div class="row">
+          <label><input type="radio" name="pgTarget" value="semua" checked> Semua pengguna</label>
+          <label><input type="radio" name="pgTarget" value="pengguna"> Satu pengguna</label>
+        </div>
+        <div id="pgPilihPengguna" class="hidden">
+          <label for="pgEmail">Pengguna tujuan</label>
+          <select id="pgEmail"><option value="">Memuat daftar pengguna…</option></select>
+          <p class="muted hidden" id="pgPesanPenggunaKosong">Belum ada pengguna UMKM yang terdaftar.</p>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button id="btnKirimPengumuman" type="button">Kirim pengumuman</button>
+        </div>
+        <h3 style="margin-top:24px">Sudah dikirim</h3>
+        <p class="muted">Pengumuman yang sudah dikirim, terbaru dulu. Pengumuman yang dinonaktifkan tidak lagi tampil untuk pengguna.</p>
+        <div class="row" style="margin-top:12px">
+          <button id="btnMuatPengumuman" type="button" class="kecil">Muat ulang</button>
+          <span class="muted" id="stempelPengumuman"></span>
+        </div>
+        <div id="pengumumanIsi"><p class="muted">Memuat daftar pengumuman…</p></div>
       </div>
     </section>
   </section>
@@ -1174,7 +1207,7 @@ function tampilLayar(nama){
   S.layar = nama;
   var btns = document.querySelectorAll("#tabbar button");
   btns.forEach(function(b){ b.classList.toggle("aktif", b.getAttribute("data-layar") === nama); });
-  ["ringkasan","pertumbuhan","aktivitas","pengguna","sistem","kelola","bayar"].forEach(function(l){
+  ["ringkasan","pertumbuhan","aktivitas","pengguna","sistem","kelola","bayar","pengumuman"].forEach(function(l){
     el("layar" + l.charAt(0).toUpperCase() + l.slice(1)).classList.toggle("aktif", l === nama);
   });
 }
@@ -1196,6 +1229,7 @@ async function muatLayarAktif(){
   if(S.layar === "sistem") return muatSistem();
   if(S.layar === "kelola") return muatKelola();
   if(S.layar === "bayar") return muatBayar();
+  if(S.layar === "pengumuman") return muatPengumuman();
   return {ok:false};
 }
 </script>
@@ -2316,6 +2350,167 @@ function bayarAktifkanDariTombol(btn){
   return aktifkanLangganan(id, btn);
 }
 
+/* ===== Layar 8: Pengumuman ===== */
+/* Admin (pemilik aplikasi) mengirim pengumuman ke semua pengguna UMKM
+   atau ke satu pengguna tertentu; pengguna membacanya di layar utama
+   aplikasi utama. Pengumuman tidak pernah dihapus — bila tidak berlaku
+   lagi, dinonaktifkan lewat kolom aktif. Kirim lewat RPC
+   tulis_pengumuman; daftar kiriman + toggle aktif lewat akses langsung
+   ke tabel pengumuman (RLS admin mengizinkan keduanya). */
+function pesanSetupPengumumanHtml(){
+  return '<div class="warn-box"><p><strong>Fitur pengumuman belum aktif</strong></p><p style="margin-top:6px">Pengumuman belum bisa ditampilkan karena pengaturan cloud untuk fitur ini belum dijalankan. Pengaturan untuk fitur ini ada di file sql-pengumuman.sql — jalankan file itu di SQL Editor cloud, lalu muat ulang halaman ini.</p></div>';
+}
+function targetPengumuman(){
+  var r = document.querySelector('input[name="pgTarget"]:checked');
+  return r ? r.value : "semua";
+}
+async function muatPengumuman(){
+  stempelMuat("pengumuman");
+  var rDaftar = await muatDaftarPengumuman();
+  await isiPilihanPenggunaPengumuman();
+  return rDaftar;
+}
+/* Daftar email pengguna UMKM untuk pilihan tujuan (satu pengguna).
+   Memakai RPC pengguna_admin yang sudah ada. Bila daftar kosong, yang
+   tampil adalah pesan jujur — bukan galat. */
+async function isiPilihanPenggunaPengumuman(){
+  var sel = el("pgEmail");
+  if(!sel) return {ok:false};
+  var pesanKosong = el("pgPesanPenggunaKosong");
+  var c = getClient();
+  if(!c){
+    if(pesanKosong) pesanKosong.classList.add("hidden");
+    sel.innerHTML = '<option value="">Daftar pengguna belum bisa dimuat</option>';
+    return {ok:false, setup:true};
+  }
+  var r;
+  try{ r = await c.rpc("pengguna_admin", {p_batas: 50, p_offset: 0}); }
+  catch(e){
+    if(pesanKosong) pesanKosong.classList.add("hidden");
+    sel.innerHTML = '<option value="">Daftar pengguna belum bisa dimuat</option>';
+    if(apakahErrorSetup(e)) return {ok:false, setup:true, error:e};
+    return {ok:false, error:e};
+  }
+  if(r.error){
+    if(pesanKosong) pesanKosong.classList.add("hidden");
+    sel.innerHTML = '<option value="">Daftar pengguna belum bisa dimuat</option>';
+    if(apakahErrorSetup(r.error)) return {ok:false, setup:true, error:r.error};
+    return {ok:false, error:r.error};
+  }
+  var rows = Array.isArray(r.data) ? r.data : [];
+  if(!rows.length){
+    sel.innerHTML = '<option value="">Belum ada pengguna UMKM yang terdaftar</option>';
+    if(pesanKosong) pesanKosong.classList.remove("hidden");
+    return {ok:true, data:rows};
+  }
+  if(pesanKosong) pesanKosong.classList.add("hidden");
+  sel.innerHTML = '<option value="">Pilih pengguna</option>';
+  rows.forEach(function(x){
+    var op = document.createElement("option");
+    op.value = x.email;
+    op.textContent = x.email + (x.nama_usaha ? " — " + x.nama_usaha : "");
+    sel.appendChild(op);
+  });
+  return {ok:true, data:rows};
+}
+function kartuPengumuman(x){
+  var id = x.id;
+  var isi = String(x.isi || "");
+  if(isi.length > 120) isi = isi.slice(0, 120) + "…";
+  var tujuan = x.target === "pengguna" ? (x.email_tujuan || "—") : "Semua pengguna";
+  var aktif = x.aktif !== false;
+  var html = '<div class="bayar-kartu">'
+    + '<div class="baris"><span class="k">Judul</span><span class="v kuat">' + esc(x.judul || "—") + '</span></div>'
+    + '<div class="baris"><span class="k">Isi</span><span class="v">' + esc(isi) + '</span></div>'
+    + '<div class="baris"><span class="k">Tujuan</span><span class="v">' + esc(tujuan) + '</span></div>'
+    + '<div class="baris"><span class="k">Status</span><span class="v">' + (aktif ? "Aktif" : "Tidak aktif") + '</span></div>'
+    + '<div class="baris"><span class="k">Dikirim</span><span class="v">' + fmtTanggal(x.dibuat_pada) + '</span></div>'
+    + '<div class="aksi-bayar"><button type="button" data-pengumuman-toggle="' + esc(id) + '" data-pengumuman-aktif="' + (aktif ? "1" : "0") + '">' + (aktif ? "Nonaktifkan" : "Aktifkan kembali") + '</button></div>'
+    + '</div>';
+  return html;
+}
+async function muatDaftarPengumuman(){
+  var box = el("pengumumanIsi");
+  box.innerHTML = '<p class="muted">Memuat daftar pengumuman…</p>';
+  var c = getClient();
+  if(!c){ box.innerHTML = pesanSetupPengumumanHtml(); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("pengumuman").select("id,judul,isi,target,email_tujuan,dibuat_oleh,dibuat_pada,aktif").order("dibuat_pada", {ascending:false}); }
+  catch(e){
+    if(apakahErrorSetup(e)){ box.innerHTML = pesanSetupPengumumanHtml(); return {ok:false, setup:true, error:e}; }
+    box.innerHTML = '<p class="muted">Daftar pengumuman belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(e)); return {ok:false, error:e};
+  }
+  if(r.error){
+    if(apakahErrorSetup(r.error)){ box.innerHTML = pesanSetupPengumumanHtml(); return {ok:false, setup:true, error:r.error}; }
+    box.innerHTML = '<p class="muted">Daftar pengumuman belum bisa dimuat.</p>'; tampilPopup("Belum bisa memuat", pesanRamah(r.error)); return {ok:false, error:r.error};
+  }
+  var rows = Array.isArray(r.data) ? r.data : [];
+  if(!rows.length){ box.innerHTML = '<p class="muted">Belum ada pengumuman yang dikirim.</p>'; return {ok:true, data:rows}; }
+  box.innerHTML = rows.map(kartuPengumuman).join("");
+  return {ok:true, data:rows};
+}
+async function kirimPengumuman(){
+  var judul = String(el("pgJudul").value || "").trim();
+  var isi = String(el("pgIsi").value || "").trim();
+  var target = targetPengumuman();
+  var email = target === "pengguna" ? String(el("pgEmail").value || "").trim() : null;
+  if(!judul){ tampilPopup("Judul belum diisi","Tulis judul pengumuman dulu, lalu ketuk \"Kirim pengumuman\"."); return {ok:false}; }
+  if(!isi){ tampilPopup("Isi belum diisi","Tulis isi pengumuman dulu, lalu ketuk \"Kirim pengumuman\"."); return {ok:false}; }
+  if(target === "pengguna" && !email){ tampilPopup("Pengguna belum dipilih","Pilih pengguna tujuan pengumuman ini."); return {ok:false}; }
+  var tujuanTeks = target === "semua" ? "semua pengguna" : email;
+  tanyaKonfirmasi("Kirim pengumuman ini?",
+    "Kirim pengumuman '" + judul + "' ke " + tujuanTeks + "?",
+    async function(){
+      var hasil = await panggilRpc("tulis_pengumuman", {p_judul:judul, p_isi:isi, p_target:target, p_email:email});
+      if(!hasil.ok){
+        if(hasil.setup){ tampilPopup("Fitur pengumuman belum aktif","Pengumuman belum bisa dikirim karena pengaturan cloud untuk fitur ini belum dijalankan. Pengaturan untuk fitur ini ada di file sql-pengumuman.sql."); }
+        else { tampilPopup("Belum bisa mengirim", pesanRamah(hasil.error)); }
+        return hasil;
+      }
+      tampilPopup("Pengumuman terkirim","Pengumuman '" + judul + "' sudah terkirim ke " + tujuanTeks + ".");
+      el("pgJudul").value = "";
+      el("pgIsi").value = "";
+      var radioSemua = document.querySelector('input[name="pgTarget"][value="semua"]');
+      if(radioSemua) radioSemua.checked = true;
+      el("pgPilihPengguna").classList.add("hidden");
+      el("pgEmail").value = "";
+      await muatDaftarPengumuman();
+      return {ok:true};
+    });
+  return {ok:true};
+}
+async function togglePengumuman(id, aktifBaru){
+  var c = getClient();
+  if(!c){ tampilPopup("Fitur pengumuman belum aktif","Pengumuman belum bisa diubah karena pengaturan cloud untuk fitur ini belum dijalankan."); return {ok:false, setup:true}; }
+  var r;
+  try{ r = await c.from("pengumuman").update({aktif:aktifBaru}).eq("id", id); }
+  catch(e){
+    if(apakahErrorSetup(e)){ tampilPopup("Fitur pengumuman belum aktif","Pengumuman belum bisa diubah karena pengaturan cloud untuk fitur ini belum dijalankan."); return {ok:false, setup:true, error:e}; }
+    tampilPopup("Belum bisa mengubah", pesanRamah(e)); return {ok:false, error:e};
+  }
+  if(r.error){
+    if(apakahErrorSetup(r.error)){ tampilPopup("Fitur pengumuman belum aktif","Pengumuman belum bisa diubah karena pengaturan cloud untuk fitur ini belum dijalankan."); return {ok:false, setup:true, error:r.error}; }
+    tampilPopup("Belum bisa mengubah", pesanRamah(r.error)); return {ok:false, error:r.error};
+  }
+  await muatDaftarPengumuman();
+  return {ok:true};
+}
+function pengumumanToggleDariTombol(btn){
+  var id = btn.getAttribute("data-pengumuman-toggle");
+  var aktif = btn.getAttribute("data-pengumuman-aktif") === "1";
+  if(!id) return {ok:false};
+  if(aktif){
+    tanyaKonfirmasi("Nonaktifkan pengumuman ini?",
+      "Pengumuman ini tidak lagi tampil untuk pengguna.",
+      function(){ return togglePengumuman(id, false); });
+  }else{
+    tanyaKonfirmasi("Aktifkan kembali pengumuman ini?",
+      "Pengumuman ini tampil lagi untuk pengguna.",
+      function(){ return togglePengumuman(id, true); });
+  }
+  return {ok:true};
+}
+
 /* ===== Init & event ===== */
 function hashParam(k){ try{ return new URLSearchParams(String(window.location.hash||"").replace(/^#/,"")).get(k); }catch(e){ return null; } }
 function salinSql(){
@@ -2382,6 +2577,11 @@ function bindEvents(){
   el("btnMuatKelola").addEventListener("click", async function(){ await muatKelola(); });
   el("btnMuatBayar").addEventListener("click", async function(){ await muatBayar(); });
   el("btnMuatBayarTerverifikasi").addEventListener("click", async function(){ await muatBayarTerverifikasi(); });
+  el("btnMuatPengumuman").addEventListener("click", async function(){ await muatPengumuman(); });
+  el("btnKirimPengumuman").addEventListener("click", async function(){ await kirimPengumuman(); });
+  document.querySelectorAll('input[name="pgTarget"]').forEach(function(r){
+    r.addEventListener("change", function(){ el("pgPilihPengguna").classList.toggle("hidden", targetPengumuman() !== "pengguna"); });
+  });
   document.querySelectorAll("#tabbar button").forEach(function(b){
     b.addEventListener("click", async function(){
       tampilLayar(b.getAttribute("data-layar"));
@@ -2397,6 +2597,8 @@ function bindEvents(){
       if(ba){ bayarAksiDariTombol(t); return; }
       var bak = t.getAttribute("data-bayar-aktifkan");
       if(bak){ bayarAktifkanDariTombol(t); return; }
+      var pt = t.getAttribute("data-pengumuman-toggle");
+      if(pt){ pengumumanToggleDariTombol(t); return; }
       var bk = t.getAttribute("data-bayar-bukti");
       if(bk){ lihatBuktiBayar(bk); return; }
       var bp = t.getAttribute("data-bukti-perbesar");
@@ -2520,6 +2722,10 @@ window.__admin = {
   muatKelolaPemda:muatKelolaPemda, muatKelolaInvestor:muatKelolaInvestor,
   muatBayar:muatBayar, verifikasiPembayaran:verifikasiPembayaran, lihatBuktiBayar:lihatBuktiBayar,
   muatBayarTerverifikasi:muatBayarTerverifikasi, aktifkanLangganan:aktifkanLangganan,
+  muatPengumuman:muatPengumuman, muatDaftarPengumuman:muatDaftarPengumuman,
+  isiPilihanPenggunaPengumuman:isiPilihanPenggunaPengumuman,
+  kirimPengumuman:kirimPengumuman, togglePengumuman:togglePengumuman,
+  pengumumanToggleDariTombol:pengumumanToggleDariTombol, targetPengumuman:targetPengumuman,
   tampilBuktiPerbesar:tampilBuktiPerbesar, tutupBuktiPerbesar:tutupBuktiPerbesar,
   muatThumbBukti:muatThumbBukti, mintaUrlBukti:mintaUrlBukti,
   perbaruiLencanaBayar:perbaruiLencanaBayar, hitungBayarMenunggu:hitungBayarMenunggu,
